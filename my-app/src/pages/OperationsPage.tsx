@@ -67,12 +67,6 @@ export const OperationsPage: FC = () => {
       {/* Список операций */}
       <Row>
         <Col>
-          {operations.length === 0 ? (
-            <div className="text-center py-5">
-              <h3>Операции не найдены</h3>
-              <p>Попробуйте изменить параметры поиска</p>
-            </div>
-          ) : (
             <div className="operations-grid">
               {operations.map((operation) => (
                 <Card key={operation.id} className="operation-card">
@@ -102,7 +96,6 @@ export const OperationsPage: FC = () => {
                 </Card>
               ))}
             </div>
-          )}
         </Col>
       </Row>
     </Container>
