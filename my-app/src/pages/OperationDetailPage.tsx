@@ -19,7 +19,6 @@ export const OperationDetailPage: FC = () => {
   if (!operation) {
     return (
       <Container style={{ textAlign: 'center', padding: '50px' }}>
-        <div>Операция не найдена</div>
       </Container>
     )
   }
@@ -50,7 +49,6 @@ export const OperationDetailPage: FC = () => {
       <div className="operation-stats">
         <p className="operation-stat">Коэффициент кровопотери: {operation.blood_loss_coeff}</p>
         <p className="operation-stat">Средний объем кровопотери: {operation.avg_blood_loss} мл</p>
-        <p className="operation-stat">Статус: {operation.status}</p>
       </div>
 
       <div className="operation-description">
