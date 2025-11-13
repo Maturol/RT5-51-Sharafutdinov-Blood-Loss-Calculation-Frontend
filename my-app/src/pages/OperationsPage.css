@@ -1,0 +1,10 @@
+.operations-header {
+  margin-bottom: 2rem;
+}
+
+.loadingBg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}

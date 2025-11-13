@@ -1,0 +1,325 @@
+/* ===== ОБЩИЕ СТИЛИ ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: #000000;
+    background-color: #ffffff;
+    margin: 0;
+    overflow: auto;
+}
+
+/* Переопределение Bootstrap контейнера */
+.container {
+    width: 100%;
+    max-width: 1886px !important;
+    margin: 0 auto;
+    padding: 33px 239px 0 239px !important;
+    position: relative;
+}
+
+/* Кастомные кнопки (переопределяем Bootstrap) */
+.btn {
+    display: inline-block !important;
+    padding: 10px 20px !important;
+    font-family: 'Roboto', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    text-align: center !important;
+    border: 1px solid #112E51 !important;
+    border-radius: 2px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    min-width: 120px !important;
+}
+
+/* Кнопка "Подробнее" - нейтральная */
+.btn-outline-primary {
+    background: #ffffff !important;
+    color: #112E51 !important;
+    border: 1px solid #112E51 !important;
+}
+
+.btn-outline-primary:hover {
+    background: #f5f5f5 !important;
+    color: #112E51 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(17, 46, 81, 0.2);
+}
+
+/* Кнопка поиска - акцентная зеленая */
+.btn-primary {
+    background: #147662 !important;
+    color: #ffffff !important;
+    border: 1px solid #112E51 !important;
+}
+
+.btn-primary:hover {
+    background: #0f5a4a !important;
+    border: 1px solid #0f5a4a !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(20, 118, 98, 0.3);
+}
+
+/* Переопределение Bootstrap форм */
+.form-control {
+    border: 1px solid #112E51 !important;
+    border-radius: 2px !important;
+    font-size: 20px !important;
+    height: 44px !important;
+}
+
+.form-control:focus {
+    box-shadow: none !important;
+    border-color: #112E51 !important;
+}
+
+/* Переопределение Bootstrap карточек */
+.card {
+    border: 1px solid #112E51 !important;
+    border-radius: 2px !important;
+}
+
+.card-img-top {
+    border-radius: 0 !important;
+}
+
+/* Кастомные классы */
+.home-btn {
+    position: absolute;
+    top: 33px;
+    left: 239px;
+    width: 81px;
+    height: 82px;
+    z-index: 1000;
+}
+
+.home-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.horizontal-line {
+    height: 1px;
+    background: #112E51;
+    margin: 82px 0 77px 0;
+    width: 100%;
+}
+
+/* ===== СТРАНИЦА УСЛУГ ===== */
+
+.search-form {
+    display: flex;
+    margin: 77px auto 52px auto;
+    width: 100%;
+    max-width: 1096px;
+    justify-content: center;
+}
+
+.search-form .form-control {
+    flex: 1;
+    max-width: 980px;
+    border-radius: 2px 0 0 2px !important;
+    border-right: none !important;
+}
+
+.search-form .btn {
+    width: 116px;
+    height: 44px;
+    border-left: none !important;
+    border-radius: 0 2px 2px 0 !important;
+    flex-shrink: 0;
+}
+
+.bloodlosscalc-card {
+    width: 172px;
+    height: 169px;
+    background: white;
+    border: 1px solid #112E51;
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    margin: 0 auto 30px auto;
+    display: block;
+}
+
+.bloodlosscalc-image {
+    width: 100px;
+    height: 108px;
+    margin: 11px auto 0 auto;
+    overflow: hidden;
+}
+
+.bloodlosscalc-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bloodlosscalc-info {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.bloodlosscalc-info p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #000000;
+}
+
+.operations-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 464px);
+    gap: 25px;
+    margin-bottom: 50px;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.operation-card {
+    width: 464px;
+    background: white;
+    border: 1px solid #112E51;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.operation-image {
+    width: 464px;
+    height: 268px;
+    overflow: hidden;
+}
+
+.operation-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.operation-content {
+    padding: 20px;
+    text-align: center;
+}
+
+.operation-content h3 {
+    color: #000000;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.coefficient {
+    color: #000000;
+}
+
+/* Блок кнопок в операциях */
+.operation-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.operation-actions .btn {             
+    height: 44px;          
+    display: flex;            
+    align-items: center;     
+    justify-content: center; 
+    text-decoration: none;  
+    box-sizing: border-box;
+}
+
+/* ===== СТРАНИЦА УСЛУГИ ===== */
+
+.operation-image-large {
+    width: 100%;
+    max-width: 862px;
+    height: 498px;
+    overflow: hidden;
+    margin: 0 auto 34px auto;
+    border: 1px solid #112E51;
+    border-radius: 2px;
+}
+
+.operation-image-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.operation-info {
+    text-align: center;
+    margin: 0 auto 40px auto;
+    width: 290px;
+}
+
+.operation-info h2 {
+    color: #000000;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.operation-stats {
+    text-align: left;
+    margin: 0 auto 20px auto;
+    width: 100%;
+    max-width: 862px;
+}
+
+.operation-stat {
+    margin-bottom: 15px;
+    color: #000000;
+    white-space: nowrap;
+}
+
+.operation-description {
+    text-align: left;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 862px;
+}
+
+.operation-description-content {
+    color: #000000;
+    line-height: 1.8;
+    white-space: normal;
+}
+
+/* Стили для карусели */
+.carousel-control-prev,
+.carousel-control-next {
+  width: 5% !important;
+}
+
+.carousel-indicators {
+  bottom: -50px !important;
+}
+
+.carousel-indicators button {
+  background-color: #112E51 !important;
+}
+
+/* Адаптивность для карусели */
+@media (max-width: 768px) {
+  .carousel-item div {
+    height: 300px !important;
+  }
+  
+  .carousel-item h2 {
+    font-size: 1.5rem;
+  }
+  
+  .carousel-item .lead {
+    font-size: 1rem;
+  }
+}

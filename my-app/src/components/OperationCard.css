@@ -1,0 +1,25 @@
+.operation-card {
+  padding: 8px;
+  height: 100%;
+}
+
+.cardImage {
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.textStyle {
+  height: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 12px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+}
+
+.cardActions button {
+  flex: 1;
+}
