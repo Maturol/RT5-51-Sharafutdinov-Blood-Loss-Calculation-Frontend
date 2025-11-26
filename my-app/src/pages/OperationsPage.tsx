@@ -1,16 +1,18 @@
-// OperationsPage.tsx
 import { type FC, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap'
 import { type Operation, getOperations, getCartInfo, type CartInfo } from '../modules/itunesApi'
+import { useAppDispatch, useAppSelector } from '../hooks/redux'
+import { setSearchTerm } from '../store/slices/filtersSlice'
 
-// Импортируем картинку по умолчанию
-const defaultOperationImage = '/default-operation.jpg'
+const defaultOperationImage = '/blood-loss-calc/default-operation.jpg'
 
 export const OperationsPage: FC = () => {
   const [operations, setOperations] = useState<Operation[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
   const [cartInfo, setCartInfo] = useState<CartInfo>({ current_request_id: 0, service_count: 0 })
+  
+  const dispatch = useAppDispatch()
+  const { searchTerm } = useAppSelector((state) => state.filters) 
 
   useEffect(() => {
     loadOperations()
@@ -32,16 +34,19 @@ export const OperationsPage: FC = () => {
     loadOperations()
   }
 
+  const handleSearchTermChange = (value: string) => {
+    dispatch(setSearchTerm(value))
+  }
+
   return (
     <Container>
-      {/* Заголовок страницы услуг */}
       <Row className="mb-4">
         <Col>
           <h1 className="text-center">Хирургические операции</h1>
         </Col>
       </Row>
 
-      {/* Поиск */}
+      {/* ТОЛЬКО поиск по названию */}
       <Row className="mb-4">
         <Col>
           <Form onSubmit={handleSearch} className="search-form">
@@ -49,7 +54,7 @@ export const OperationsPage: FC = () => {
               type="text" 
               placeholder="Поиск операций..." 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchTermChange(e.target.value)}
             />
             <Button type="submit" variant="primary">
               Поиск
@@ -58,7 +63,6 @@ export const OperationsPage: FC = () => {
         </Col>
       </Row>
 
-      {/* Карточка заявки с реальными данными из API */}
       <Row className="mb-4">
         <Col className="text-center">
           <div 
@@ -82,7 +86,6 @@ export const OperationsPage: FC = () => {
         </Col>
       </Row>
 
-      {/* Список операций */}
       <Row>
         <Col>
             <div className="operations-grid">

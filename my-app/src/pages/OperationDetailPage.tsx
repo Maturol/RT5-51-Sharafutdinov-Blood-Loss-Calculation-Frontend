@@ -2,7 +2,7 @@ import { type FC, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Container, Image } from 'react-bootstrap'
 import { type Operation, getOperationById } from '../modules/itunesApi'
-const defaultOperationImage = '/default-operation.jpg'
+const defaultOperationImage = '/blood-loss-calc/default-operation.jpg'
 
 export const OperationDetailPage: FC = () => {
   const [operation, setOperation] = useState<Operation | null>(null)
