@@ -91,3 +91,24 @@ export const getOperationById = async (id: number | string): Promise<Operation> 
   if (!operation) throw new Error('Operation not found')
   return operation
 }
+
+
+export interface CartInfo {
+  current_request_id: number
+  service_count: number
+}
+
+export const getCartInfo = async (): Promise<CartInfo> => {
+  try {
+    const response = await fetch(`${API_BASE}/operationcart`)
+    
+    if (response.ok) {
+      return await response.json()
+    }
+  } catch (error) {
+    console.error('Error fetching cart info:', error)
+  }
+  
+  // Fallback если бэкенд недоступен
+  return { current_request_id: 0, service_count: 0 }
+}

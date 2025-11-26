@@ -1,7 +1,8 @@
+// OperationsPage.tsx
 import { type FC, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap'
-import { type Operation, getOperations } from '../modules/itunesApi'
+import { type Operation, getOperations, getCartInfo, type CartInfo } from '../modules/itunesApi'
 
 // Импортируем картинку по умолчанию
 const defaultOperationImage = '/default-operation.jpg'
@@ -9,14 +10,21 @@ const defaultOperationImage = '/default-operation.jpg'
 export const OperationsPage: FC = () => {
   const [operations, setOperations] = useState<Operation[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [cartInfo, setCartInfo] = useState<CartInfo>({ current_request_id: 0, service_count: 0 })
 
   useEffect(() => {
     loadOperations()
+    loadCartInfo()
   }, [])
 
   const loadOperations = async () => {
     const response = await getOperations(searchTerm)
     setOperations(response.operations)
+  }
+
+  const loadCartInfo = async () => {
+    const info = await getCartInfo()
+    setCartInfo(info)
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -50,15 +58,25 @@ export const OperationsPage: FC = () => {
         </Col>
       </Row>
 
-      {/* Карточка заявки (неактивная) */}
+      {/* Карточка заявки с реальными данными из API */}
       <Row className="mb-4">
         <Col className="text-center">
-          <div className="bloodlosscalc-card" style={{ opacity: 0.5, cursor: 'not-allowed', display: 'inline-block' }}>
+          <div 
+            className="bloodlosscalc-card" 
+            style={{ 
+              opacity: cartInfo.service_count > 0 ? 1 : 0.5, 
+              cursor: cartInfo.service_count > 0 ? 'pointer' : 'not-allowed',
+              display: 'inline-block' 
+            }}
+          >
             <div className="bloodlosscalc-image">
-              <img src="http://localhost:9000/blood-loss-images/bloodlosscalc-image.png" alt="Заявка" />
+              <img 
+                src="http://localhost:9000/blood-loss-images/bloodlosscalc-image.png" 
+                alt="Заявка" 
+              />
             </div>
             <div className="bloodlosscalc-info">
-              <p>Услуг: 0</p>
+              <p>Услуг: {cartInfo.service_count}</p>
             </div>
           </div>
         </Col>
