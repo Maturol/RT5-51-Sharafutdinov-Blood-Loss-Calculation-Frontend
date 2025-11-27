@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config';
+
 export interface Operation {
   id: number
   title: string
@@ -26,8 +28,6 @@ interface BackendOperationResult {
   operations: BackendOperation[]
 }
 
-const API_BASE = 'http://localhost:8080/api'
-
 const transformBackendOperation = (backendOp: BackendOperation): Operation => {
   return {
     id: backendOp.ID,
@@ -45,12 +45,17 @@ export const getOperations = async (name = ''): Promise<OperationResult> => {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 500)
     
-    // Добавляем параметр поиска в URL
     const url = name 
-      ? `${API_BASE}/operations?title=${encodeURIComponent(name)}`
-      : `${API_BASE}/operations`
+      ? `${API_BASE_URL}/operations?title=${encodeURIComponent(name)}`
+      : `${API_BASE_URL}/operations`;
     
-    const response = await fetch(url, { signal: controller.signal })
+    
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
     clearTimeout(timeoutId)
     
     if (response.ok) {
@@ -59,6 +64,7 @@ export const getOperations = async (name = ''): Promise<OperationResult> => {
       return { operations: transformedOperations }
     }
   } catch (error) {
+    console.error('API error:', error)
     // Игнорируем ошибки, используем mock
   }
   
@@ -73,9 +79,11 @@ export const getOperations = async (name = ''): Promise<OperationResult> => {
 export const getOperationById = async (id: number | string): Promise<Operation> => {
   try {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 500)
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
     
-    const response = await fetch(`${API_BASE}/operations/${id}`, { signal: controller.signal })
+    const response = await fetch(`${API_BASE_URL}/operations/${id}`, { 
+      signal: controller.signal 
+    })
     clearTimeout(timeoutId)
     
     if (response.ok) {
@@ -83,6 +91,7 @@ export const getOperationById = async (id: number | string): Promise<Operation> 
       return transformBackendOperation(backendOp)
     }
   } catch (error) {
+    console.error('API error:', error)
     // Игнорируем ошибки, используем mock
   }
   
@@ -92,7 +101,6 @@ export const getOperationById = async (id: number | string): Promise<Operation> 
   return operation
 }
 
-
 export interface CartInfo {
   current_request_id: number
   service_count: number
@@ -100,7 +108,11 @@ export interface CartInfo {
 
 export const getCartInfo = async (): Promise<CartInfo> => {
   try {
-    const response = await fetch(`${API_BASE}/operationcart`)
+    const response = await fetch(`${API_BASE_URL}/operationcart`, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
     
     if (response.ok) {
       return await response.json()

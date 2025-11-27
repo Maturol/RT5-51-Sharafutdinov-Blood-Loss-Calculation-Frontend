@@ -2,6 +2,8 @@ import { type FC, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Container, Image } from 'react-bootstrap'
 import { type Operation, getOperationById } from '../modules/itunesApi'
+import { IMAGE_BASE_URL } from '../config';
+
 const defaultOperationImage = '/blood-loss-calc/default-operation.jpg'
 
 export const OperationDetailPage: FC = () => {
@@ -16,9 +18,28 @@ export const OperationDetailPage: FC = () => {
     })
   }, [id])
 
+  const processImageUrl = (url: string | null) => {
+    if (!url) return defaultOperationImage;
+    
+    if (url.includes('192.168.1.72:9000')) {
+      return url;
+    }
+    
+    if (url.includes('localhost:9000')) {
+      return url.replace('localhost:9000', '192.168.1.72:9000');
+    }
+    
+    if (url.startsWith('/')) {
+      return `${IMAGE_BASE_URL}${url}`;
+    }
+    
+    return url;
+  }
+
   if (!operation) {
     return (
       <Container style={{ textAlign: 'center', padding: '50px' }}>
+        <div>Загрузка...</div>
       </Container>
     )
   }
@@ -26,14 +47,20 @@ export const OperationDetailPage: FC = () => {
   return (
     <Container>
       <Link to="/operations" className="home-btn">
-        <img src="http://localhost:9000/blood-loss-images/home-icon.png" alt="Домой" />
+        <img 
+          src={`${IMAGE_BASE_URL}/blood-loss-images/home-icon.png`} 
+          alt="Домой" 
+          onError={(e) => {
+            e.currentTarget.src = defaultOperationImage;
+          }}
+        />
       </Link>
 
       <div className="horizontal-line"></div>
 
       <div className="operation-image-large">
         <Image
-          src={operation.image_url || defaultOperationImage} 
+          src={processImageUrl(operation.image_url)} 
           alt={operation.title}
           fluid
           onError={(e) => {

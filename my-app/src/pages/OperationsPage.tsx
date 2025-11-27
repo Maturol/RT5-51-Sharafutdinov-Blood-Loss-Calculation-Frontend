@@ -4,8 +4,23 @@ import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap'
 import { type Operation, getOperations, getCartInfo, type CartInfo } from '../modules/itunesApi'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { setSearchTerm } from '../store/slices/filtersSlice'
+import { IMAGE_BASE_URL } from '../config';
 
 const defaultOperationImage = '/blood-loss-calc/default-operation.jpg'
+
+const processImageUrl = (url: string | null) => {
+  if (!url) return defaultOperationImage;
+  
+  if (url.includes('localhost:9000')) {
+    return url.replace('localhost:9000', '192.168.1.72:9000');
+  }
+  
+  if (url.includes('192.168.1.72:9000')) {
+    return url;
+  }
+  
+  return url;
+}
 
 export const OperationsPage: FC = () => {
   const [operations, setOperations] = useState<Operation[]>([])
@@ -46,7 +61,6 @@ export const OperationsPage: FC = () => {
         </Col>
       </Row>
 
-      {/* ТОЛЬКО поиск по названию */}
       <Row className="mb-4">
         <Col>
           <Form onSubmit={handleSearch} className="search-form">
@@ -75,8 +89,11 @@ export const OperationsPage: FC = () => {
           >
             <div className="bloodlosscalc-image">
               <img 
-                src="http://localhost:9000/blood-loss-images/bloodlosscalc-image.png" 
+                src={`${IMAGE_BASE_URL}/blood-loss-images/bloodlosscalc-image.png`}
                 alt="Заявка" 
+                onError={(e) => {
+                  e.currentTarget.src = defaultOperationImage
+                }}
               />
             </div>
             <div className="bloodlosscalc-info">
@@ -94,7 +111,7 @@ export const OperationsPage: FC = () => {
                   <div className="operation-image">
                     <Card.Img 
                       variant="top"
-                      src={operation.image_url || defaultOperationImage} 
+                      src={processImageUrl(operation.image_url)}
                       alt={operation.title}
                       onError={(e) => {
                         e.currentTarget.src = defaultOperationImage
