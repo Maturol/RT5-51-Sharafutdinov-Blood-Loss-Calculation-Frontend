@@ -26,7 +26,7 @@ interface BackendOperationResult {
   operations: BackendOperation[]
 }
 
-const API_BASE = 'http://localhost:8080/api'
+const API_BASE = '/api'
 
 const transformBackendOperation = (backendOp: BackendOperation): Operation => {
   return {
@@ -43,7 +43,7 @@ const transformBackendOperation = (backendOp: BackendOperation): Operation => {
 export const getOperations = async (name = ''): Promise<OperationResult> => {
   try {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 500)
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
     
     // Добавляем параметр поиска в URL
     const url = name 
@@ -73,7 +73,7 @@ export const getOperations = async (name = ''): Promise<OperationResult> => {
 export const getOperationById = async (id: number | string): Promise<Operation> => {
   try {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 500)
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
     
     const response = await fetch(`${API_BASE}/operations/${id}`, { signal: controller.signal })
     clearTimeout(timeoutId)

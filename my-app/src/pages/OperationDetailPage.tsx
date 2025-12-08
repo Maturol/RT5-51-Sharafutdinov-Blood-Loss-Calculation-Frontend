@@ -26,7 +26,7 @@ export const OperationDetailPage: FC = () => {
   return (
     <Container>
       <Link to="/operations" className="home-btn">
-        <img src="http://localhost:9000/blood-loss-images/home-icon.png" alt="Домой" />
+        <img src="/minio/blood-loss-images/home-icon.png" alt="Домой" />
       </Link>
 
       <div className="horizontal-line"></div>

@@ -75,7 +75,7 @@ export const OperationsPage: FC = () => {
           >
             <div className="bloodlosscalc-image">
               <img 
-                src="http://localhost:9000/blood-loss-images/bloodlosscalc-image.png" 
+                src="/minio/blood-loss-images/bloodlosscalc-image.png" 
                 alt="Заявка" 
               />
             </div>
