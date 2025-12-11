@@ -31,17 +31,20 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: {
-        enabled: true,
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // 5MB
       },
       manifest: {
         name: "Калькулятор кровопотери",
         short_name: "BloodLossCalc",
-        start_url: "/blood-loss-calc/",
-        display: "standalone",
-        background_color: "#ffffff",
+        description: "Система расчета кровопотери при операциях",
         theme_color: "#112E51",
+        background_color: "#ffffff",
+        display: "standalone",
         orientation: "portrait-primary",
+        scope: "/blood-loss-calc/",
+        start_url: "/blood-loss-calc/",
         icons: [
           {
             src: "icons/icon-192x192.png",
@@ -53,7 +56,10 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png"
           }
-        ],
+        ]
+      },
+      devOptions: {
+        enabled: false
       }
     })
   ],
