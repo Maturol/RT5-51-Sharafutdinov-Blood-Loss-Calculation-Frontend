@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Container, Card, Button, Row, Col, Form, Alert, Badge, Modal, Spinner } from 'react-bootstrap'
+import { Container, Card, Button, Row, Col, Form, Alert, Badge, Modal, Spinner, Table } from 'react-bootstrap'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import {
@@ -11,6 +11,8 @@ import {
   removeOperationLocally,
 } from '../store/slices/bloodlosscalcSlice'
 import { type HandlerBLItem } from '../api/Api'
+import { BreadCrumbs } from '../components/BreadCrumbs'
+import { api } from '../api'
 
 const BloodlosscalcDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -55,27 +57,34 @@ const BloodlosscalcDetailPage: React.FC = () => {
   
   // Функция для сохранения данных пациента
   const handleSavePatientData = async () => {
-  if (!id) return
-  
-  setIsSavingPatientData(true)
-  setSavePatientError(null)
-  setSavePatientSuccess(false)
-  
-  try {
-    // Используем правильный endpoint для обновления заявки
+    if (!id) return
     
-    setSavePatientSuccess(true)
+    setIsSavingPatientData(true)
+    setSavePatientError(null)
+    setSavePatientSuccess(false)
     
-    // Обновляем данные заявки
-    dispatch(fetchBloodlosscalcById(parseInt(id)))
-    
-  } catch (error: any) {
-    console.error('Ошибка сохранения:', error)
-    setSavePatientError(error.response?.data?.description || 'Ошибка сохранения данных пациента')
-  } finally {
-    setIsSavingPatientData(false)
+    try {
+      // ВАЖНО: Реальный вызов API!
+      await api.api.bloodlosscalcsUpdate(
+        parseInt(id),
+        {
+          patient_height: patientHeight,
+          patient_weight: patientWeight
+        }
+      )
+      
+      setSavePatientSuccess(true)
+      
+      // Обновляем данные заявки
+      dispatch(fetchBloodlosscalcById(parseInt(id)))
+      
+    } catch (error: any) {
+      console.error('Ошибка сохранения:', error)
+      setSavePatientError(error.response?.data?.description || 'Ошибка сохранения данных пациента')
+    } finally {
+      setIsSavingPatientData(false)
+    }
   }
-}
   
   const handleFormRequest = async () => {
     if (id) {
@@ -156,7 +165,6 @@ const BloodlosscalcDetailPage: React.FC = () => {
       surgery_duration: operation.surgery_duration || undefined,
     })
   }
-
   
   const getStatusBadge = (status?: string) => {
     switch (status) {
@@ -199,13 +207,14 @@ const BloodlosscalcDetailPage: React.FC = () => {
   const isCompleted = currentRequestDetail.status === 'завершена'
   
   return (
-    <Container className="py-5">
+    <Container fluid className="py-5 px-4">
+      <BreadCrumbs crumbs={[
+        { label: 'Заявки', path: '/bloodlosscalcs' },
+        { label: `Заявка #${currentRequestDetail?.id || ''}` }
+      ]} />
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Заявка #{currentRequestDetail.id || 'N/A'} {getStatusBadge(currentRequestDetail.status)}</h1>
         <div>
-          <Link to="/bloodlosscalcs" className="me-2">
-            <Button variant="outline-secondary">Назад</Button>
-          </Link>
           {isDraft && (
             <Button variant="danger" onClick={handleDeleteRequest}>
               Удалить заявку
@@ -219,7 +228,7 @@ const BloodlosscalcDetailPage: React.FC = () => {
       <Card className="mb-4">
         <Card.Body>
           <Row>
-            <Col md={6}>
+            <Col lg={6} md={12}>
               <p><strong>Дата создания:</strong> {currentRequestDetail.created_at || 'Не указана'}</p>
               <p><strong>Создатель:</strong> {currentRequestDetail.creator || 'Не указан'}</p>
               {currentRequestDetail.moderator && (
@@ -232,7 +241,7 @@ const BloodlosscalcDetailPage: React.FC = () => {
                 <p><strong>Дата завершения:</strong> {currentRequestDetail.completed_at}</p>
               )}
             </Col>
-            <Col md={6}>
+            <Col lg={6} md={12}>
               <Form>
                 {/* Сообщения об ошибках/успехе */}
                 {savePatientError && (
@@ -329,7 +338,7 @@ const BloodlosscalcDetailPage: React.FC = () => {
         </Card.Body>
       </Card>
       
-      <h3>Операции в заявке ({currentRequestDetail.items?.length || 0})</h3>
+      <h3 className="mb-3">Операции в заявке ({currentRequestDetail.items?.length || 0})</h3>
       
       {!currentRequestDetail.items || currentRequestDetail.items.length === 0 ? (
         <Alert variant="info">
@@ -337,125 +346,152 @@ const BloodlosscalcDetailPage: React.FC = () => {
           <Link to="/operations">Перейти к списку операций</Link>
         </Alert>
       ) : (
-        <Row>
-          {currentRequestDetail.items.map((item: HandlerBLItem, index: number) => {
-            // Вспомогательная функция для отображения параметров
-            const renderParam = (label: string, value: any, unit: string = '') => {
-              if (value === null || value === undefined || value === '') {
-                return <p className="mb-1"><strong>{label}:</strong> <span className="text-muted">не указан</span></p>
-              }
-              return <p className="mb-1"><strong>{label}:</strong> {value}{unit}</p>
-            }
-            
-            return (
-              <Col md={6} key={index} className="mb-3">
-                <Card className="h-100">
-                  <Card.Body>
-                    <div className="d-flex flex-column h-100">
-                      <div className="d-flex mb-3">
-                        {item.operation_image && (
+        <Card className="mb-4">
+          <Card.Body className="p-0">
+            {/* Таблица на всю ширину с вертикальной прокруткой */}
+            <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+              <Table striped bordered hover className="mb-0 w-100">
+                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa', zIndex: 1 }}>
+                  <tr>
+                    <th style={{ width: '8%' }}>Изображение</th>
+                    <th style={{ width: '18%' }}>Название операции</th>
+                    <th style={{ width: '10%' }}>Коэффициент кровопотери</th>
+                    <th style={{ width: '12%' }}>Средний объем кровопотери</th>
+                    <th style={{ width: '10%' }}>Hb до</th>
+                    <th style={{ width: '10%' }}>Hb после</th>
+                    <th style={{ width: '12%' }}>Длительность</th>
+                    {isCompleted && (
+                      <th style={{ width: '12%' }}>Кровопотеря</th>
+                    )}
+                    {isDraft && (
+                      <th style={{ width: '16%' }}>Действия</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentRequestDetail.items.map((item: HandlerBLItem, index: number) => (
+                    <tr key={index}>
+                      <td className="align-middle text-center">
+                        {item.operation_image ? (
                           <img
                             src={item.operation_image}
                             alt={item.operation_title || 'Операция'}
                             style={{ 
-                              width: '100px', 
-                              height: '100px', 
-                              objectFit: 'cover', 
-                              marginRight: '15px',
-                              flexShrink: 0
+                              width: '60px', 
+                              height: '60px', 
+                              objectFit: 'cover',
+                              borderRadius: '4px'
                             }}
                           />
+                        ) : (
+                          <div style={{ 
+                            width: '60px', 
+                            height: '60px', 
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#6c757d',
+                            fontSize: '0.8rem'
+                          }}>
+                            Нет фото
+                          </div>
                         )}
-                        <div style={{ flex: 1 }}>
-                          <h5 className="mb-3">{item.operation_title || 'Без названия'}</h5>
-                          
-                          {/* Отображаем ВСЕ параметры с "не указан" для пустых */}
-                          {renderParam('Коэффициент кровопотери', item.blood_loss_coeff)}
-                          {renderParam('Средний объем', item.avg_blood_loss, ' мл')}
-                          {renderParam('Hb до операции', item.hb_before, ' г/л')}
-                          {renderParam('Hb после операции', item.hb_after, ' г/л')}
-                          {renderParam('Длительность операции', item.surgery_duration, ' ч')}
-                          
-                          {/* Показываем результат кровопотери только для завершенных заявок отдельным блоком */}
-                          {item.total_blood_loss && isCompleted && (
-                            <div className="mt-2 p-2 bg-success bg-opacity-10 rounded">
-                              <p className="mb-0">
-                                <strong>Результат расчета кровопотери:</strong>{' '}
-                                <span className="text-success fw-bold">{item.total_blood_loss} мл</span>
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      </td>
+                      <td className="align-middle">
+                        <strong>{item.operation_title || 'Без названия'}</strong>
+                      </td>
+                      <td className="align-middle text-center">
+                        <span className="fw-bold">{item.blood_loss_coeff || '-'}</span>
+                      </td>
+                      <td className="align-middle text-center">
+                        {item.avg_blood_loss ? `${item.avg_blood_loss} мл` : '-'}
+                      </td>
+                      <td className="align-middle text-center">
+                        {editingOperation === index ? (
+                          <Form.Control
+                            size="sm"
+                            type="number"
+                            min="0"
+                            max="250"
+                            value={operationData.hb_before || ''}
+                            onChange={(e) => setOperationData({
+                              ...operationData, 
+                              hb_before: e.currentTarget.value ? parseInt(e.currentTarget.value) : undefined
+                            })}
+                            className="text-center mx-auto"
+                            style={{ width: '80px' }}
+                          />
+                        ) : (
+                          item.hb_before ? `${item.hb_before} г/л` : '-'
+                        )}
+                      </td>
+                      <td className="align-middle text-center">
+                        {editingOperation === index ? (
+                          <Form.Control
+                            size="sm"
+                            type="number"
+                            min="0"
+                            max="250"
+                            value={operationData.hb_after || ''}
+                            onChange={(e) => setOperationData({
+                              ...operationData, 
+                              hb_after: e.currentTarget.value ? parseInt(e.currentTarget.value) : undefined
+                            })}
+                            className="text-center mx-auto"
+                            style={{ width: '80px' }}
+                          />
+                        ) : (
+                          item.hb_after ? `${item.hb_after} г/л` : '-'
+                        )}
+                      </td>
+                      <td className="align-middle text-center">
+                        {editingOperation === index ? (
+                          <Form.Control
+                            size="sm"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="24"
+                            value={operationData.surgery_duration || ''}
+                            onChange={(e) => setOperationData({
+                              ...operationData, 
+                              surgery_duration: e.currentTarget.value ? parseFloat(e.currentTarget.value) : undefined
+                            })}
+                            className="text-center mx-auto"
+                            style={{ width: '80px' }}
+                          />
+                        ) : (
+                          item.surgery_duration ? `${item.surgery_duration} ч` : '-'
+                        )}
+                      </td>
                       
-                      {/* Редактируемые поля только для черновиков */}
+                      {/* Кровопотеря для завершенных заявок */}
+                      {isCompleted && (
+                        <td className="align-middle text-center">
+                          {item.total_blood_loss ? (
+                            <Badge bg="success" style={{ fontSize: '0.85em', padding: '5px 10px' }}>
+                              {item.total_blood_loss} мл
+                            </Badge>
+                          ) : (
+                            <span className="text-muted">-</span>
+                          )}
+                        </td>
+                      )}
+                      
+                      {/* Действия для черновиков */}
                       {isDraft && (
-                        editingOperation === index ? (
-                          <div className="mt-auto pt-3 border-top">
-                            <h6 className="fs-6 mb-2">Редактирование параметров:</h6>
-                            
-                            <div className="row g-2 mb-2">
-                              <div className="col-12 col-sm-4">
-                                <Form.Group>
-                                  <Form.Label className="small mb-1">Hb до (г/л)</Form.Label>
-                                  <Form.Control
-                                    size="sm"
-                                    type="number"
-                                    min="0"
-                                    max="250"
-                                    value={operationData.hb_before || ''}
-                                    onChange={(e) => setOperationData({
-                                      ...operationData, 
-                                      hb_before: e.target.value ? parseInt(e.target.value) : undefined
-                                    })}
-                                  />
-                                </Form.Group>
-                              </div>
-                              
-                              <div className="col-12 col-sm-4">
-                                <Form.Group>
-                                  <Form.Label className="small mb-1">Hb после (г/л)</Form.Label>
-                                  <Form.Control
-                                    size="sm"
-                                    type="number"
-                                    min="0"
-                                    max="250"
-                                    value={operationData.hb_after || ''}
-                                    onChange={(e) => setOperationData({
-                                      ...operationData, 
-                                      hb_after: e.target.value ? parseInt(e.target.value) : undefined
-                                    })}
-                                  />
-                                </Form.Group>
-                              </div>
-                              
-                              <div className="col-12 col-sm-4">
-                                <Form.Group>
-                                  <Form.Label className="small mb-1">Длительность (ч)</Form.Label>
-                                  <Form.Control
-                                    size="sm"
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
-                                    max="24"
-                                    value={operationData.surgery_duration || ''}
-                                    onChange={(e) => setOperationData({
-                                      ...operationData, 
-                                      surgery_duration: e.target.value ? parseFloat(e.target.value) : undefined
-                                    })}
-                                  />
-                                </Form.Group>
-                              </div>
-                            </div>
-                            
-                            <div className="d-flex gap-2 mt-2">
+                        <td className="align-middle">
+                          {editingOperation === index ? (
+                            <div className="d-flex flex-column gap-1">
                               <Button 
                                 size="sm" 
                                 variant="success" 
                                 onClick={() => handleUpdateOperation(index)}
-                                className="flex-fill"
+                                className="w-100"
                               >
-                                Сохранить
+                                <i className="bi bi-check me-1"></i> Сохранить
                               </Button>
                               <Button 
                                 size="sm" 
@@ -464,21 +500,18 @@ const BloodlosscalcDetailPage: React.FC = () => {
                                   setEditingOperation(null)
                                   setOperationData({})
                                 }}
-                                className="flex-fill"
+                                className="w-100"
                               >
-                                Отмена
+                                <i className="bi bi-x me-1"></i> Отмена
                               </Button>
                             </div>
-                          </div>
-                        ) : (
-                          // Кнопки редактирования/удаления для черновика
-                          <div className="mt-auto pt-3 border-top">
-                            <div className="d-flex gap-2">
+                          ) : (
+                            <div className="d-flex gap-1 justify-content-center">
                               <Button 
                                 size="sm" 
                                 variant="outline-primary" 
                                 onClick={() => startEditOperation(index, item)}
-                                className="flex-fill"
+                                style={{ minWidth: '90px' }}
                               >
                                 <i className="bi bi-pencil me-1"></i> Редактировать
                               </Button>
@@ -486,21 +519,21 @@ const BloodlosscalcDetailPage: React.FC = () => {
                                 size="sm" 
                                 variant="outline-danger" 
                                 onClick={() => setShowDeleteModal(index)}
-                                className="flex-fill"
+                                style={{ minWidth: '80px' }}
                               >
                                 <i className="bi bi-trash me-1"></i> Удалить
                               </Button>
                             </div>
-                          </div>
-                        )
+                          )}
+                        </td>
                       )}
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            )
-          })}
-        </Row>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          </Card.Body>
+        </Card>
       )}
       
       {/* Модальное окно подтверждения удаления операции */}

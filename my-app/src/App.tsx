@@ -6,7 +6,6 @@ import { store } from './store'
 import { useAppDispatch, useAppSelector } from './hooks/redux'
 import { logoutUser } from './store/slices/authSlice'
 import { useEffect } from 'react'
-import { restoreSession } from './store/slices/authSlice'
 import { fetchCartInfo, resetCart } from './store/slices/bloodlosscalcSlice'
 
 import './App.css'
@@ -39,9 +38,6 @@ function AppContent() {
   useAppSelector((state) => state.bloodlosscalc)
 
   useEffect(() => {
-    // Восстановление сессии при загрузке
-    dispatch(restoreSession())
-    
     if (isAuthenticated) {
       dispatch(fetchCartInfo())
     }
@@ -65,11 +61,6 @@ function AppContent() {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
-              <Nav.Link as="div">
-                <Link to={ROUTES.HOME} style={{ color: 'inherit', textDecoration: 'none' }}>
-                  Главная
-                </Link>
-              </Nav.Link>
               <Nav.Link as="div">
                 <Link to={ROUTES.OPERATIONS} style={{ color: 'inherit', textDecoration: 'none' }}>
                   Операции

@@ -18,8 +18,8 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: !!localStorage.getItem('token'),
+  token: null,
+  isAuthenticated: false,
   loading: false,
   error: null,
 }
@@ -44,12 +44,9 @@ export const loginUser = createAsyncThunk(
       
       // Безопасное преобразование
       const transformedUser = transformUser(user)
-      
+
       if (token) {
         localStorage.setItem('token', token)
-      }
-      if (transformedUser) {
-        localStorage.setItem('user', JSON.stringify(transformedUser))
       }
       
       return {
@@ -96,14 +93,12 @@ export const logoutUser = createAsyncThunk(
       await api.api.logoutCreate().catch(() => {
         // Игнорируем ошибки логаута
       })
-      
+
       localStorage.removeItem('token')
-      localStorage.removeItem('user')
       
       return null
     } catch (error: any) {
       localStorage.removeItem('token')
-      localStorage.removeItem('user')
       return rejectWithValue(error.response?.data?.description || 'Ошибка выхода')
     }
   }
@@ -115,22 +110,6 @@ const authSlice = createSlice({
   reducers: {
     clearError: (state) => {
       state.error = null
-    },
-    restoreSession: (state) => {
-      const token = localStorage.getItem('token')
-      const userStr = localStorage.getItem('user')
-      
-      if (token && userStr) {
-        try {
-          const userData = JSON.parse(userStr)
-          state.token = token
-          state.user = transformUser(userData)
-          state.isAuthenticated = true
-        } catch (error) {
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
-        }
-      }
     },
   },
   extraReducers: (builder) => {
@@ -201,5 +180,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { clearError, restoreSession } = authSlice.actions
+export const { clearError } = authSlice.actions
 export default authSlice.reducer

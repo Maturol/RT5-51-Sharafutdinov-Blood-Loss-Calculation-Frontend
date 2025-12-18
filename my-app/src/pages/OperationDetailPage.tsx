@@ -2,6 +2,7 @@ import { type FC, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Container, Image } from 'react-bootstrap'
 import { type Operation, getOperationById } from '../modules/itunesApi'
+import { BreadCrumbs } from '../components/BreadCrumbs'
 const defaultOperationImage = '/blood-loss-calc/default-operation.jpg'
 
 export const OperationDetailPage: FC = () => {
@@ -30,6 +31,11 @@ export const OperationDetailPage: FC = () => {
       </Link>
 
       <div className="horizontal-line"></div>
+      
+      <BreadCrumbs crumbs={[
+        { label: 'Операции', path: '/operations' },
+        { label: operation?.title || 'Детали операции' }
+      ]} />
 
       <div className="operation-image-large">
         <Image

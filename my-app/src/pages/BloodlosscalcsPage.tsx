@@ -1,15 +1,23 @@
-import React, { useEffect } from 'react'
-import { Container, Table, Button, Badge, Alert, Spinner } from 'react-bootstrap'
+import React, { useEffect, useState } from 'react'
+import { Container, Table, Button, Badge, Alert, Spinner, Form, Row, Col, Card } from 'react-bootstrap'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { fetchBloodlosscalcs } from '../store/slices/bloodlosscalcSlice'
 import { type HandlerBloodlosscalcResponse } from '../api/Api'
+import { BreadCrumbs } from '../components/BreadCrumbs'
 
 const BloodlosscalcsPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { requests, loading, error } = useAppSelector((state) => state.bloodlosscalc)
   const { isAuthenticated } = useAppSelector((state) => state.auth)
+  
+  // Состояния для фильтров
+  const [dateFrom, setDateFrom] = useState<string>('')
+  const [dateTo, setDateTo] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [filteredRequests, setFilteredRequests] = useState<HandlerBloodlosscalcResponse[]>([])
+  const [isFilterApplied, setIsFilterApplied] = useState(false)
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -19,6 +27,69 @@ const BloodlosscalcsPage: React.FC = () => {
     
     dispatch(fetchBloodlosscalcs())
   }, [dispatch, navigate, isAuthenticated])
+  
+  // При загрузке заявок показываем все
+  useEffect(() => {
+    if (requests) {
+      setFilteredRequests(requests)
+      setIsFilterApplied(false)
+    }
+  }, [requests])
+  
+  // Функция для применения фильтров
+  const handleApplyFilters = () => {
+    if (!requests || requests.length === 0) {
+      setFilteredRequests([])
+      return
+    }
+    
+    let filtered = [...requests]
+    
+    // Фильтрация по статусу
+    if (statusFilter) {
+      filtered = filtered.filter(request => request.status === statusFilter)
+    }
+    
+    // Фильтрация по дате "от"
+    if (dateFrom) {
+      filtered = filtered.filter(request => {
+        if (!request.created_at) return false
+        const requestDate = new Date(request.created_at)
+        const fromDate = new Date(dateFrom)
+        return requestDate >= fromDate
+      })
+    }
+    
+    // Фильтрация по дате "до"
+    if (dateTo) {
+      filtered = filtered.filter(request => {
+        if (!request.created_at) return false
+        const requestDate = new Date(request.created_at)
+        const toDate = new Date(dateTo)
+        toDate.setHours(23, 59, 59, 999) // Конец дня
+        return requestDate <= toDate
+      })
+    }
+    
+    setFilteredRequests(filtered)
+    setIsFilterApplied(true)
+  }
+  
+  // Функция для сброса всех фильтров
+  const handleResetFilters = () => {
+    setDateFrom('')
+    setDateTo('')
+    setStatusFilter('')
+    if (requests) {
+      setFilteredRequests(requests)
+    }
+    setIsFilterApplied(false)
+  }
+  
+  // Проверка, есть ли активные фильтры
+  const hasActiveFilters = () => {
+    return dateFrom || dateTo || statusFilter
+  }
   
   const getStatusBadge = (status?: string) => {
     switch (status) {
@@ -48,52 +119,151 @@ const BloodlosscalcsPage: React.FC = () => {
   
   return (
     <Container className="py-5">
+      <BreadCrumbs crumbs={[
+        { label: 'Заявки', path: '/bloodlosscalcs' }
+      ]} />
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Мои заявки</h1>
-        <Link to="/">
-          <Button variant="outline-primary">На главную</Button>
-        </Link>
       </div>
       
       {error && <Alert variant="danger">{error}</Alert>}
       
-      {!requests || requests.length === 0 ? (
+      {/* Карточка с фильтрами */}
+      <Card className="mb-4">
+        <Card.Body>
+          <h5 className="mb-3">Фильтры заявок</h5>
+          <Row className="align-items-end">
+            {/* Фильтр по статусу */}
+            <Col md={3} sm={6} className="mb-3">
+              <Form.Group>
+                <Form.Label>Статус заявки</Form.Label>
+                <Form.Select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="">Все статусы</option>
+                  <option value="черновик">Черновик</option>
+                  <option value="сформирована">Сформирована</option>
+                  <option value="завершена">Завершена</option>
+                  <option value="удален">Удалена</option>
+                </Form.Select>
+              </Form.Group>
+            </Col>
+            
+            {/* Фильтр по дате "от" */}
+            <Col md={3} sm={6} className="mb-3">
+              <Form.Group>
+                <Form.Label>Дата создания от</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  max={dateTo || undefined}
+                />
+              </Form.Group>
+            </Col>
+            
+            {/* Фильтр по дате "до" */}
+            <Col md={3} sm={6} className="mb-3">
+              <Form.Group>
+                <Form.Label>Дата создания до</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  min={dateFrom || undefined}
+                />
+              </Form.Group>
+            </Col>
+            
+            {/* Кнопки действий */}
+            <Col md={3} sm={6} className="mb-3">
+              <div className="d-flex flex-column gap-2">
+                <Button 
+                  variant="primary" 
+                  onClick={handleApplyFilters}
+                  className="w-100"
+                  disabled={!hasActiveFilters()}
+                >
+                  Применить фильтры
+                </Button>
+                <Button 
+                  variant="outline-secondary" 
+                  onClick={handleResetFilters}
+                  className="w-100"
+                  disabled={!isFilterApplied && !hasActiveFilters()}
+                >
+                  Сбросить фильтры
+                </Button>
+              </div>
+            </Col>
+          </Row>
+          
+          {/* Информация о результатах фильтрации */}
+          <div className="mt-2">
+            {isFilterApplied ? (
+              <Alert variant="info" className="py-2 mb-0">
+                <div className="d-flex justify-content-between align-items-center">
+                  <small className="text-muted">
+                    Найдено: <strong>{filteredRequests.length}</strong> из {requests?.length || 0}
+                  </small>
+                </div>
+              </Alert>
+            ) : (
+              <div className="text-muted">
+                <small>
+                  Всего заявок: <strong>{requests?.length || 0}</strong>
+                </small>
+              </div>
+            )}
+          </div>
+        </Card.Body>
+      </Card>
+      
+      {!filteredRequests || filteredRequests.length === 0 ? (
         <Alert variant="info">
-          У вас пока нет заявок. <Link to="/operations">Перейти к операциям</Link>
+          {requests && requests.length > 0 && isFilterApplied
+            ? 'По выбранным фильтрам заявок не найдено. Попробуйте изменить критерии поиска.'
+            : 'У вас пока нет заявок. '}
         </Alert>
       ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Статус</th>
-              <th>Дата создания</th>
-              <th>Рост пациента</th>
-              <th>Вес пациента</th>
-              <th>Количество рассчитанных операций</th>
-              <th>Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((request: HandlerBloodlosscalcResponse) => (
-              <tr key={request.id}>
-                <td>{request.id || '-'}</td>
-                <td>{getStatusBadge(request.status)}</td>
-                <td>{request.created_at || '-'}</td>
-                <td>{request.patient_height ? `${request.patient_height} м` : '-'}</td>
-                <td>{request.patient_weight ? `${request.patient_weight} кг` : '-'}</td>
-                <td>{request.calculated_count || '0'}</td>
-                <td>
-                  <Link to={`/bloodlosscalcs/${request.id}`}>
-                    <Button variant="outline-primary" size="sm">
-                      Просмотреть
-                    </Button>
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <>
+          <div className="table-responsive">
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Статус</th>
+                  <th>Дата создания</th>
+                  <th>Рост пациента (м)</th>
+                  <th>Вес пациента (кг)</th>
+                  <th>Количество рассчитаных операций</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRequests.map((request: HandlerBloodlosscalcResponse) => (
+                  <tr key={request.id}>
+                    <td>{request.id || '-'}</td>
+                    <td>{getStatusBadge(request.status)}</td>
+                    <td>{request.created_at ? new Date(request.created_at).toLocaleDateString('ru-RU') : '-'}</td>
+                    <td className="text-center">{request.patient_height ? request.patient_height.toFixed(2) : '-'}</td>
+                    <td className="text-center">{request.patient_weight || '-'}</td>
+                    <td className="text-center">{request.calculated_count || '0'}</td>
+                    <td>
+                      <Link to={`/bloodlosscalcs/${request.id}`}>
+                        <Button variant="outline-primary" size="sm">
+                          Просмотреть
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </>
       )}
     </Container>
   )

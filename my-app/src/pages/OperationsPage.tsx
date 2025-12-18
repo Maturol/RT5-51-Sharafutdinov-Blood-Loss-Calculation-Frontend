@@ -10,6 +10,7 @@ import {
 } from '../store/slices/operationsSlice'
 import { fetchCartInfo } from '../store/slices/bloodlosscalcSlice'
 import { type HandlerOperation } from '../api/Api' // Импортируем сгенерированный тип
+import { BreadCrumbs } from '../components/BreadCrumbs'
 
 const defaultOperationImage = '/blood-loss-calc/default-operation.jpg'
 
@@ -41,14 +42,10 @@ export const OperationsPage: FC = () => {
   if (isAuthenticated) {
     dispatch(fetchCartInfo()).then(result => {
       if (fetchCartInfo.rejected.match(result)) {
-        // Если запрос упал с 401, возможно токен невалиден
         if (result.error.message?.includes('401')) {
           console.log('Token might be invalid, clearing auth...')
-          // Можно очистить локальное хранилище
           localStorage.removeItem('token')
           localStorage.removeItem('user')
-          // Или диспатчить logout
-          // dispatch(logoutUser())
         }
       }
     })
@@ -114,6 +111,9 @@ export const OperationsPage: FC = () => {
   
   return (
     <Container>
+      <BreadCrumbs crumbs={[
+        { label: 'Операции', path: '/operations' }
+      ]} />
       <Row className="mb-4">
         <Col>
           <h1 className="text-center">Хирургические операции</h1>

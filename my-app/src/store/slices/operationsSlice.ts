@@ -36,12 +36,10 @@ export const fetchOperations = createAsyncThunk<
       
       const response = await api.api.operationsList(params, { secure: false })
       
-      // Бэкенд возвращает данные с заглавными ключами, трансформируем
       const rawOperations = response.data.operations || []
       
-      // Трансформируем данные из бэкенд формата в фронтенд формат
       const transformedOperations = rawOperations.map((op: any) => ({
-        id: op.ID,           // Большая ID → маленькая id
+        id: op.ID,
         title: op.Title,
         description: op.Description,
         status: op.Status,
