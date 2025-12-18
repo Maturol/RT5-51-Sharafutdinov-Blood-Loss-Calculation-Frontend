@@ -68,13 +68,12 @@ function AppContent() {
               </Nav.Link>
               
               {isAuthenticated && (
-                <>
-                  <Nav.Link as="div">
-                    <Link to="/bloodlosscalcs" style={{ color: 'inherit', textDecoration: 'none' }}>
-                      Мои заявки
-                    </Link>
-                  </Nav.Link>
-                </>
+                <Nav.Link as="div">
+                  <Link to="/bloodlosscalcs" style={{ color: 'inherit', textDecoration: 'none' }}>
+                    {/* ИЗМЕНЕНИЕ: Разная надпись для модератора и пользователя */}
+                    {user?.is_moderator ? 'Заявки' : 'Мои заявки'}
+                  </Link>
+                </Nav.Link>
               )}
             </Nav>
             
@@ -91,7 +90,7 @@ function AppContent() {
                     </Link>
                   </Nav.Link>
                   
-                  {/* Кнопка выхода - тоже как ссылка */}
+                  {/* Кнопка выхода */}
                   <Nav.Link 
                     as="div"
                     onClick={handleLogout} 
@@ -102,14 +101,14 @@ function AppContent() {
                 </>
               ) : (
                 <>
-                  {/* Войти - как обычная ссылка */}
+                  {/* Войти */}
                   <Nav.Link as="div">
                     <Link to="/login" style={{ color: 'inherit', textDecoration: 'none' }}>
                       Войти
                     </Link>
                   </Nav.Link>
                   
-                  {/* Регистрация - как обычная ссылка */}
+                  {/* Регистрация */}
                   <Nav.Link as="div">
                     <Link to="/register" style={{ color: 'inherit', textDecoration: 'none' }}>
                       Регистрация
