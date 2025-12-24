@@ -6,6 +6,32 @@ import { fetchBloodlosscalcs } from '../store/slices/bloodlosscalcSlice'
 import { type HandlerBloodlosscalcResponse } from '../api/Api'
 import { BreadCrumbs } from '../components/BreadCrumbs'
 
+// Функция для парсинга даты в формате "DD.MM.YYYY"
+const parseDateFromDDMMYYYY = (dateStr?: string): Date | null => {
+  if (!dateStr) return null
+  
+  try {
+    const parts = dateStr.split('.')
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10)
+      const month = parseInt(parts[1], 10) - 1
+      const year = parseInt(parts[2], 10)
+      return new Date(year, month, day)
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+// Функция для форматирования Date в "YYYY-MM-DD"
+const formatDateToInput = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const day = date.getDate().toString().padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const BloodlosscalcsPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -13,7 +39,7 @@ const BloodlosscalcsPage: React.FC = () => {
   const { isAuthenticated } = useAppSelector((state) => state.auth)
   
   // Состояния для фильтров
-  const [dateFrom, setDateFrom] = useState<string>('')
+  const [dateFrom, setDateFrom] = useState<string>(formatDateToInput(new Date())) // Сегодняшняя дата по умолчанию
   const [dateTo, setDateTo] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [filteredRequests, setFilteredRequests] = useState<HandlerBloodlosscalcResponse[]>([])
@@ -52,21 +78,22 @@ const BloodlosscalcsPage: React.FC = () => {
     
     // Фильтрация по дате "от"
     if (dateFrom) {
+      const fromDate = new Date(dateFrom)
+      
       filtered = filtered.filter(request => {
-        if (!request.created_at) return false
-        const requestDate = new Date(request.created_at)
-        const fromDate = new Date(dateFrom)
+        const requestDate = parseDateFromDDMMYYYY(request.created_at)
+        if (!requestDate) return false
         return requestDate >= fromDate
       })
     }
     
     // Фильтрация по дате "до"
     if (dateTo) {
+      const toDate = new Date(dateTo)
+      
       filtered = filtered.filter(request => {
-        if (!request.created_at) return false
-        const requestDate = new Date(request.created_at)
-        const toDate = new Date(dateTo)
-        toDate.setHours(23, 59, 59, 999) // Конец дня
+        const requestDate = parseDateFromDDMMYYYY(request.created_at)
+        if (!requestDate) return false
         return requestDate <= toDate
       })
     }
@@ -77,7 +104,7 @@ const BloodlosscalcsPage: React.FC = () => {
   
   // Функция для сброса всех фильтров
   const handleResetFilters = () => {
-    setDateFrom('')
+    setDateFrom(formatDateToInput(new Date())) // Сброс к сегодняшней дате
     setDateTo('')
     setStatusFilter('')
     if (requests) {
@@ -247,7 +274,7 @@ const BloodlosscalcsPage: React.FC = () => {
                   <tr key={request.id}>
                     <td>{request.id || '-'}</td>
                     <td>{getStatusBadge(request.status)}</td>
-                    <td>{request.created_at ? new Date(request.created_at).toLocaleDateString('ru-RU') : '-'}</td>
+                    <td>{request.created_at || '-'}</td>
                     <td className="text-center">{request.patient_height ? request.patient_height.toFixed(2) : '-'}</td>
                     <td className="text-center">{request.patient_weight || '-'}</td>
                     <td className="text-center">{request.calculated_count || '0'}</td>
