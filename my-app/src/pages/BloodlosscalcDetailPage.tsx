@@ -174,8 +174,10 @@ const BloodlosscalcDetailPage: React.FC = () => {
         return <Badge bg="info">Сформирована</Badge>
       case 'завершена':
         return <Badge bg="success">Завершена</Badge>
+      case 'отклонена':
+        return <Badge bg="danger">Отклонена</Badge>
       case 'удален':
-        return <Badge bg="danger">Удалена</Badge>
+        return <Badge bg="dark">Удалена</Badge>
       default:
         return <Badge bg="light" text="dark">{status || 'Неизвестно'}</Badge>
     }

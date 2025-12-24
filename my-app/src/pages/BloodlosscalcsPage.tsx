@@ -12,14 +12,23 @@ const BloodlosscalcsPage: React.FC = () => {
   const { requests, loading, error } = useAppSelector((state) => state.bloodlosscalc)
   const { isAuthenticated, user } = useAppSelector((state) => state.auth)
   
+  // Получаем сегодняшнюю дату в формате YYYY-MM-DD
+  const getTodayDate = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  
   // Все фильтры на фронтенде
-  const [dateFrom, setDateFrom] = useState<string>('')
+  const [dateFrom, setDateFrom] = useState<string>(getTodayDate()) // Сегодняшняя дата по умолчанию
   const [dateTo, setDateTo] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [creatorFilter, setCreatorFilter] = useState<string>('')
   
   const [filteredRequests, setFilteredRequests] = useState<HandlerBloodlosscalcResponse[]>([])
-  const [isFilterApplied, setIsFilterApplied] = useState<boolean>(false) // Исправлено: boolean вместо string
+  const [isFilterApplied, setIsFilterApplied] = useState<boolean>(false)
   const [allCreators, setAllCreators] = useState<string[]>([])
   
   // Состояния для управления статусами
@@ -29,13 +38,10 @@ const BloodlosscalcsPage: React.FC = () => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-'
     try {
-      // Пробуем разные форматы
       const date = new Date(dateString)
       if (isNaN(date.getTime())) {
-        // Если это строка в формате DD.MM.YYYY
         const parts = dateString.split('.')
         if (parts.length === 3) {
-          const [day, month, year] = parts
           return dateString
         }
         return '-'
@@ -46,10 +52,8 @@ const BloodlosscalcsPage: React.FC = () => {
     }
   }
 
-  // Проверяем, является ли пользователь модератором
   const isModerator = user?.is_moderator || false
 
-  // ==================== SHORT POLLING ====================
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login')
@@ -60,19 +64,15 @@ const BloodlosscalcsPage: React.FC = () => {
       dispatch(fetchBloodlosscalcs())
     }
     
-    // Первая загрузка
     loadRequests()
     
-    // Short polling каждые 5 секунд
     const intervalId = setInterval(loadRequests, 5000)
     
     return () => clearInterval(intervalId)
   }, [dispatch, navigate, isAuthenticated])
   
-  // ==================== ИНИЦИАЛИЗАЦИЯ ДАННЫХ ====================
   useEffect(() => {
     if (requests) {
-      // Собираем всех создателей (только для модератора)
       if (isModerator) {
         const creators = Array.from(new Set(
           requests
@@ -82,11 +82,9 @@ const BloodlosscalcsPage: React.FC = () => {
         setAllCreators(creators)
       }
       
-      // Применяем фильтры если они уже применены
       if (isFilterApplied) {
         applyFilters(requests)
       } else {
-        // Иначе показываем отфильтрованные по пользователю
         let initialFiltered = [...requests]
         if (!isModerator) {
           initialFiltered = initialFiltered.filter(request => 
@@ -96,32 +94,27 @@ const BloodlosscalcsPage: React.FC = () => {
         setFilteredRequests(initialFiltered)
       }
     }
-  }, [requests, isModerator, user?.username, isFilterApplied]) // Добавлено user?.username
+  }, [requests, isModerator, user?.username, isFilterApplied])
   
-  // ==================== ФИЛЬТРАЦИЯ НА ФРОНТЕНДЕ ====================
   const applyFilters = (requestsList: HandlerBloodlosscalcResponse[]) => {
     let filtered = [...requestsList]
     
-    // 1. Для обычного пользователя показываем только его заявки
     if (!isModerator) {
       filtered = filtered.filter(request => 
         request.creator_login === user?.username
       )
     }
     
-    // 2. Фильтр по статусу
     if (statusFilter) {
       filtered = filtered.filter(request => request.status === statusFilter)
     }
     
-    // 3. Фильтр по создателю (только для модератора)
     if (isModerator && creatorFilter) {
       filtered = filtered.filter(request => 
         request.creator_login?.toLowerCase().includes(creatorFilter.toLowerCase())
       )
     }
     
-    // 4. Фильтр по дате "от"
     if (dateFrom) {
       filtered = filtered.filter(request => {
         if (!request.created_at) return false
@@ -131,19 +124,18 @@ const BloodlosscalcsPage: React.FC = () => {
       })
     }
     
-    // 5. Фильтр по дате "до"
     if (dateTo) {
       filtered = filtered.filter(request => {
         if (!request.created_at) return false
         const requestDate = new Date(request.created_at)
         const toDate = new Date(dateTo)
-        toDate.setHours(23, 59, 59, 999) // Конец дня
+        toDate.setHours(23, 59, 59, 999)
         return requestDate <= toDate
       })
     }
     
     setFilteredRequests(filtered)
-    setIsFilterApplied(true) // Исправлено: передаем boolean true
+    setIsFilterApplied(true)
   }
   
   const handleApplyFilters = () => {
@@ -153,13 +145,13 @@ const BloodlosscalcsPage: React.FC = () => {
   }
   
   const handleResetFilters = () => {
+    // Сбрасываем на пустые значения как было раньше
     setDateFrom('')
     setDateTo('')
     setStatusFilter('')
     setCreatorFilter('')
-    setIsFilterApplied(false) // Исправлено: передаем boolean false
+    setIsFilterApplied(false)
     
-    // Показываем исходные данные
     if (requests) {
       let initialFiltered = [...requests]
       if (!isModerator) {
@@ -171,11 +163,11 @@ const BloodlosscalcsPage: React.FC = () => {
     }
   }
   
-  const hasActiveFilters = () => {
-    return statusFilter || dateFrom || dateTo || (isModerator && creatorFilter)
+  // Кнопки активны если есть хоть один измененный фильтр
+  const hasChangedFilters = () => {
+    return dateFrom !== getTodayDate() || dateTo || statusFilter || (isModerator && creatorFilter)
   }
   
-  // ==================== КНОПКИ ДЛЯ МОДЕРАТОРА ====================
   const handleCompleteRequest = async (requestId: number) => {
     if (!window.confirm('Запустить расчет кровопотери? Это займет 5-10 секунд.')) {
       return
@@ -198,7 +190,9 @@ const BloodlosscalcsPage: React.FC = () => {
         throw new Error(`HTTP error ${response.status}: ${errorText}`)
       }
       
-      // После успешного запуска обновляем список
+      const data = await response.json()
+      alert(`Расчет запущен! ${data.note}`)
+      
       setTimeout(() => {
         dispatch(fetchBloodlosscalcs())
       }, 1000)
@@ -211,8 +205,9 @@ const BloodlosscalcsPage: React.FC = () => {
     }
   }
   
-  const handleDeleteRequest = async (requestId: number) => {
-    if (!window.confirm('Вы уверены, что хотите удалить эту заявку?')) {
+  // НОВАЯ ФУНКЦИЯ: Отклонение заявки (вместо удаления)
+  const handleRejectRequest = async (requestId: number) => {
+    if (!window.confirm('Вы уверены, что хотите отклонить эту заявку?')) {
       return
     }
     
@@ -220,8 +215,9 @@ const BloodlosscalcsPage: React.FC = () => {
     setStatusError(null)
     
     try {
-      const response = await fetch(`http://localhost:8080/api/bloodlosscalcs/${requestId}`, {
-        method: 'DELETE',
+      // Отправляем запрос на отклонение
+      const response = await fetch(`http://localhost:8080/api/bloodlosscalcs/${requestId}/reject`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -233,32 +229,33 @@ const BloodlosscalcsPage: React.FC = () => {
         throw new Error(`HTTP error ${response.status}: ${errorText}`)
       }
       
-      // После успешного удаления обновляем список
+      const data = await response.json()
+      console.log(`Заявка отклонена модератором ID: ${data.moderator_id}`)
+      
       setTimeout(() => {
         dispatch(fetchBloodlosscalcs())
       }, 1000)
       
     } catch (error: any) {
-      console.error('Ошибка удаления:', error)
-      setStatusError(error.message || 'Ошибка удаления заявки')
+      console.error('Ошибка отклонения:', error)
+      setStatusError(error.message || 'Ошибка отклонения заявки')
     } finally {
       setChangingStatus(prev => ({ ...prev, [requestId]: false }))
     }
   }
   
-  // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'черновик':
         return <Badge bg="secondary">Черновик</Badge>
       case 'сформирована':
         return <Badge bg="info">Сформирована</Badge>
-      case 'в процессе расчета':
-        return <Badge bg="warning">В процессе расчета</Badge>
       case 'завершена':
         return <Badge bg="success">Завершена</Badge>
+      case 'отклонена': // НОВЫЙ СТАТУС
+        return <Badge bg="danger">Отклонена</Badge>
       case 'удален':
-        return <Badge bg="danger">Удалена</Badge>
+        return <Badge bg="dark">Удалена</Badge>
       default:
         return <Badge bg="light" text="dark">{status || 'Неизвестно'}</Badge>
     }
@@ -288,13 +285,11 @@ const BloodlosscalcsPage: React.FC = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       {statusError && <Alert variant="danger" onClose={() => setStatusError(null)} dismissible>{statusError}</Alert>}
       
-      {/* КАРТОЧКА С ФИЛЬТРАМИ (все на фронтенде) */}
       <Card className="mb-4">
         <Card.Body>
           <h5 className="mb-3">Фильтры заявок</h5>
           
           <Row className="align-items-end">
-            {/* Фильтр по статусу */}
             <Col md={isModerator ? 3 : 4} sm={6} className="mb-3">
               <Form.Group>
                 <Form.Label>Статус заявки</Form.Label>
@@ -305,14 +300,14 @@ const BloodlosscalcsPage: React.FC = () => {
                   <option value="">Все статусы</option>
                   <option value="черновик">Черновик</option>
                   <option value="сформирована">Сформирована</option>
-                  <option value="в процессе расчета">В процессе расчета</option>
                   <option value="завершена">Завершена</option>
+                  <option value="отклонена">Отклонена</option> {/* НОВЫЙ СТАТУС */}
                   <option value="удален">Удалена</option>
+                  {/* СТАТУС "в процессе расчета" УБРАН */}
                 </Form.Select>
               </Form.Group>
             </Col>
             
-            {/* Фильтр по дате "от" */}
             <Col md={isModerator ? 3 : 4} sm={6} className="mb-3">
               <Form.Group>
                 <Form.Label>Дата создания от</Form.Label>
@@ -325,7 +320,6 @@ const BloodlosscalcsPage: React.FC = () => {
               </Form.Group>
             </Col>
             
-            {/* Фильтр по дате "до" */}
             <Col md={isModerator ? 3 : 4} sm={6} className="mb-3">
               <Form.Group>
                 <Form.Label>Дата создания до</Form.Label>
@@ -338,7 +332,6 @@ const BloodlosscalcsPage: React.FC = () => {
               </Form.Group>
             </Col>
             
-            {/* Фильтр по создателю (ТОЛЬКО ДЛЯ МОДЕРАТОРА) */}
             {isModerator && (
               <Col md={3} sm={6} className="mb-3">
                 <Form.Group>
@@ -361,14 +354,14 @@ const BloodlosscalcsPage: React.FC = () => {
               </Col>
             )}
             
-            {/* Кнопки управления фильтрами */}
             <Col md={isModerator ? 3 : 4} sm={6} className="mb-3">
               <div className="d-flex flex-column gap-2">
                 <Button 
                   variant="primary" 
                   onClick={handleApplyFilters}
                   className="w-100"
-                  disabled={!hasActiveFilters()}
+                  // Кнопка активна всегда, даже если стоит только сегодняшняя дата
+                  disabled={loading}
                 >
                   Применить фильтры
                 </Button>
@@ -376,7 +369,8 @@ const BloodlosscalcsPage: React.FC = () => {
                   variant="outline-secondary" 
                   onClick={handleResetFilters}
                   className="w-100"
-                  disabled={!isFilterApplied && !hasActiveFilters()}
+                  // Кнопка активна всегда
+                  disabled={loading}
                 >
                   Сбросить фильтры
                 </Button>
@@ -386,7 +380,6 @@ const BloodlosscalcsPage: React.FC = () => {
         </Card.Body>
       </Card>
       
-      {/* ТАБЛИЦА ЗАЯВОК */}
       {!filteredRequests || filteredRequests.length === 0 ? (
         <Alert variant="info">
           {requests && requests.length > 0 && isFilterApplied
@@ -420,14 +413,11 @@ const BloodlosscalcsPage: React.FC = () => {
                       <td>
                         <div className="d-flex align-items-center gap-2">
                           {getStatusBadge(request.status)}
-                          {request.status === 'в процессе расчета' && (
-                            <Spinner animation="border" size="sm" />
-                          )}
+                          {/* СПИННЕР ДЛЯ "в процессе расчета" УБРАН */}
                         </div>
                       </td>
                       <td>{formatDate(request.created_at)}</td>
                       
-                      {/* Колонка "Создатель" только для модератора */}
                       {isModerator && (
                         <td>
                           {request.creator_login || '-'}
@@ -448,17 +438,16 @@ const BloodlosscalcsPage: React.FC = () => {
                       </td>
                       <td>
                         <div className="d-flex gap-2 flex-wrap">
-                          {/* Кнопка просмотра */}
                           <Link to={`/bloodlosscalcs/${request.id}`}>
                             <Button variant="outline-primary" size="sm">
                               Просмотреть
                             </Button>
                           </Link>
                           
-                          {/* Кнопки для модератора */}
+                          {/* Кнопка завершения для модератора - только для сформированных заявок */}
                           {isModerator && request.status === 'сформирована' && (
                             <Button 
-                              variant="outline-warning" 
+                              variant="outline-success" 
                               size="sm"
                               onClick={() => handleCompleteRequest(request.id!)}
                               disabled={isChanging}
@@ -474,17 +463,19 @@ const BloodlosscalcsPage: React.FC = () => {
                             </Button>
                           )}
                           
-                          {/* Кнопка удаления для модератора */}
-                          {isModerator && (
+                          {/* Кнопка отклонения для модератора - для сформированных заявок (вместо удаления) */}
+                          {isModerator && request.status === 'сформирована' && (
                             <Button 
                               variant="outline-danger" 
                               size="sm"
-                              onClick={() => handleDeleteRequest(request.id!)}
+                              onClick={() => handleRejectRequest(request.id!)}
                               disabled={isChanging}
                             >
-                              Удалить
+                              Отклонить
                             </Button>
                           )}
+                          
+                          {/* Старая кнопка удаления убрана */}
                         </div>
                       </td>
                     </tr>
