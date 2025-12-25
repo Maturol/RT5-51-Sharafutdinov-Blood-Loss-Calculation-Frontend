@@ -424,6 +424,51 @@ body {
   background-color: #112E51 !important;
 }
 
+/* Стили для мультимодального поиска */
+.clip-search-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid #147662;
+}
+
+.similarity-badge {
+  font-size: 0.85rem;
+  padding: 0.25em 0.6em;
+}
+
+.image-preview-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.image-preview-clear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.clip-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: #dee2e6;
+  overflow: hidden;
+}
+
+.clip-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #147662, #0f5a4a);
+  transition: width 0.3s ease;
+}
+
 /* Адаптивность для карусели */
 @media (max-width: 768px) {
   .carousel-item div {
