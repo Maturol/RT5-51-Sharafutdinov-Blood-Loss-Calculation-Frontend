@@ -1,47 +1,52 @@
 import { type FC, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap'
-import { type Operation, getOperations, getCartInfo, type CartInfo } from '../modules/itunesApi'
+import { 
+  type Operation, 
+  getOperations, 
+  getCartInfo, 
+  type CartInfo,
+  getImageUrl
+} from '../modules/itunesApi'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { setSearchTerm } from '../store/slices/filtersSlice'
-import { IMAGE_BASE_URL } from '../config';
 
-const defaultOperationImage = '/blood-loss-calc/default-operation.jpg'
-
-const processImageUrl = (url: string | null) => {
-  if (!url) return defaultOperationImage;
-  
-  if (url.includes('localhost:9000')) {
-    return url.replace('localhost:9000', '192.168.1.72:9000');
-  }
-  
-  if (url.includes('192.168.1.72:9000')) {
-    return url;
-  }
-  
-  return url;
-}
+const DEFAULT_OPERATION_IMAGE = '/default-operation.jpg'
 
 export const OperationsPage: FC = () => {
   const [operations, setOperations] = useState<Operation[]>([])
   const [cartInfo, setCartInfo] = useState<CartInfo>({ current_request_id: 0, service_count: 0 })
+  const [loading, setLoading] = useState(true)
+  const [cartIconUrl, setCartIconUrl] = useState<string>('')
   
   const dispatch = useAppDispatch()
-  const { searchTerm } = useAppSelector((state) => state.filters) 
+  const { searchTerm } = useAppSelector((state) => state.filters)
 
   useEffect(() => {
-    loadOperations()
-    loadCartInfo()
+    loadAllData()
   }, [])
 
-  const loadOperations = async () => {
-    const response = await getOperations(searchTerm)
-    setOperations(response.operations)
-  }
-
-  const loadCartInfo = async () => {
-    const info = await getCartInfo()
-    setCartInfo(info)
+  const loadAllData = async () => {
+    setLoading(true)
+    try {
+      // Загружаем операции
+      const operationsResponse = await getOperations(searchTerm)
+      setOperations(operationsResponse.operations)
+      
+      // Загружаем инфо корзины
+      const cartInfoResponse = await getCartInfo()
+      setCartInfo(cartInfoResponse)
+      
+      // Загружаем иконку корзины
+      const iconUrl = await getImageUrl('cartIcon')
+      setCartIconUrl(iconUrl)
+    } catch (error) {
+      setOperations([])
+      setCartInfo({ current_request_id: 0, service_count: 0 })
+      setCartIconUrl('')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -51,6 +56,28 @@ export const OperationsPage: FC = () => {
 
   const handleSearchTermChange = (value: string) => {
     dispatch(setSearchTerm(value))
+  }
+
+  const loadOperations = async () => {
+    try {
+      const response = await getOperations(searchTerm)
+      setOperations(response.operations)
+    } catch (error) {
+      setOperations([])
+    }
+  }
+
+  if (loading) {
+    return (
+      <Container>
+        <div className="text-center p-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Загрузка...</span>
+          </div>
+          <p className="mt-3">Загрузка операций...</p>
+        </div>
+      </Container>
+    )
   }
 
   return (
@@ -88,13 +115,28 @@ export const OperationsPage: FC = () => {
             }}
           >
             <div className="bloodlosscalc-image">
-              <img 
-                src={`${IMAGE_BASE_URL}/blood-loss-images/bloodlosscalc-image.png`}
-                alt="Заявка" 
-                onError={(e) => {
-                  e.currentTarget.src = defaultOperationImage
-                }}
-              />
+              {cartIconUrl ? (
+                <img 
+                  src={cartIconUrl}
+                  alt="Заявка"
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'contain'
+                  }}
+                  onError={() => setCartIconUrl('')}
+                />
+              ) : (
+                <div style={{
+                  width: '100px',
+                  height: '108px',
+                  margin: '11px auto 0 auto',
+                  border: '1px solid #112E51',
+                  backgroundColor: 'transparent'
+                }}>
+                  {/* Пусто - нет изображения */}
+                </div>
+              )}
             </div>
             <div className="bloodlosscalc-info">
               <p>Услуг: {cartInfo.service_count}</p>
@@ -105,17 +147,24 @@ export const OperationsPage: FC = () => {
 
       <Row>
         <Col>
+          {operations.length === 0 ? (
+            <div className="text-center p-5">
+              <p className="lead">Операции не найдены</p>
+              <p>Попробуйте изменить поисковый запрос</p>
+            </div>
+          ) : (
             <div className="operations-grid">
               {operations.map((operation) => (
                 <Card key={operation.id} className="operation-card">
                   <div className="operation-image">
                     <Card.Img 
                       variant="top"
-                      src={processImageUrl(operation.image_url)}
+                      src={operation.image_url || DEFAULT_OPERATION_IMAGE}
                       alt={operation.title}
                       onError={(e) => {
-                        e.currentTarget.src = defaultOperationImage
+                        e.currentTarget.src = DEFAULT_OPERATION_IMAGE
                       }}
+                      style={{ height: '268px', objectFit: 'cover' }}
                     />
                   </div>
                   <Card.Body className="operation-content">
@@ -134,6 +183,7 @@ export const OperationsPage: FC = () => {
                 </Card>
               ))}
             </div>
+          )}
         </Col>
       </Row>
     </Container>

@@ -1,70 +1,122 @@
 import { type FC, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Container, Image } from 'react-bootstrap'
-import { type Operation, getOperationById } from '../modules/itunesApi'
-import { IMAGE_BASE_URL } from '../config';
+import { type Operation, getOperationById, getImageUrl } from '../modules/itunesApi'
 
-const defaultOperationImage = '/blood-loss-calc/default-operation.jpg'
+const DEFAULT_OPERATION_IMAGE = '/default-operation.jpg'
 
 export const OperationDetailPage: FC = () => {
   const [operation, setOperation] = useState<Operation | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [homeIconUrl, setHomeIconUrl] = useState<string>('')
   const { id } = useParams()
 
   useEffect(() => {
     if (!id) return
 
-    getOperationById(id).then(setOperation).catch(() => {
-      setOperation(null)
-    })
+    const loadData = async () => {
+      setLoading(true)
+      try {
+        // Загружаем операцию
+        const data = await getOperationById(id)
+        setOperation(data)
+        
+        // Загружаем иконку дома
+        const iconUrl = await getImageUrl('homeIcon')
+        setHomeIconUrl(iconUrl)
+      } catch (error) {
+        setOperation(null)
+        setHomeIconUrl('')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
   }, [id])
 
-  const processImageUrl = (url: string | null) => {
-    if (!url) return defaultOperationImage;
-    
-    if (url.includes('192.168.1.72:9000')) {
-      return url;
-    }
-    
-    if (url.includes('localhost:9000')) {
-      return url.replace('localhost:9000', '192.168.1.72:9000');
-    }
-    
-    if (url.startsWith('/')) {
-      return `${IMAGE_BASE_URL}${url}`;
-    }
-    
-    return url;
+  if (loading) {
+    return (
+      <Container>
+        <div className="text-center p-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Загрузка...</span>
+          </div>
+          <p className="mt-3">Загрузка операции...</p>
+        </div>
+      </Container>
+    )
   }
 
   if (!operation) {
     return (
-      <Container style={{ textAlign: 'center', padding: '50px' }}>
-        <div>Загрузка...</div>
+      <Container>
+        <div className="text-center p-5">
+          <h2>Операция не найдена</h2>
+          <Link to="/operations" className="btn btn-primary mt-3">
+            Вернуться к списку операций
+          </Link>
+        </div>
       </Container>
     )
   }
 
   return (
     <Container>
-      <Link to="/operations" className="home-btn">
-        <img 
-          src={`${IMAGE_BASE_URL}/blood-loss-images/home-icon.png`} 
-          alt="Домой" 
-          onError={(e) => {
-            e.currentTarget.src = defaultOperationImage;
-          }}
-        />
+      {/* Кнопка домой - на страницу операций */}
+      <Link 
+        to="/operations" 
+        className="home-btn"
+        style={{ 
+          position: 'absolute',
+          top: '33px',
+          left: '239px',
+          width: '81px',
+          height: '82px',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textDecoration: 'none',
+          border: homeIconUrl ? 'none' : '1px solid #112E51',
+          backgroundColor: 'transparent'
+        }}
+      >
+        {homeIconUrl ? (
+          <img 
+            src={homeIconUrl}
+            alt="К списку операций"
+            style={{ 
+              width: '100%', 
+              height: '100%',
+              objectFit: 'contain'
+            }}
+            onError={() => setHomeIconUrl('')}
+          />
+        ) : (
+          // Пустой блок если нет иконки
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {/* Пусто */}
+          </div>
+        )}
       </Link>
 
       <div className="horizontal-line"></div>
 
       <div className="operation-image-large">
         <Image
-          src={processImageUrl(operation.image_url)} 
+          src={operation.image_url || DEFAULT_OPERATION_IMAGE}
           alt={operation.title}
           fluid
+          style={{ height: '498px', objectFit: 'cover' }}
           onError={(e) => {
-            e.currentTarget.src = defaultOperationImage
+            e.currentTarget.src = DEFAULT_OPERATION_IMAGE
           }}
         />
       </div>
@@ -79,7 +131,9 @@ export const OperationDetailPage: FC = () => {
       </div>
 
       <div className="operation-description">
-        <span className="operation-description-content">Описание операции: {operation.description}</span>
+        <span className="operation-description-content">
+          Описание операции: {operation.description}
+        </span>
       </div>
     </Container>
   )

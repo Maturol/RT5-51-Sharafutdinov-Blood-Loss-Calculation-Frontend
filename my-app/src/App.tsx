@@ -12,7 +12,7 @@ import './App.css'
 function App() {
   return (
     <Provider store={store}>
-      <BrowserRouter basename="/blood-loss-calc">
+      <BrowserRouter>
         <Navbar bg="dark" variant="dark" expand="lg">
           <Container>
             <Navbar.Brand>

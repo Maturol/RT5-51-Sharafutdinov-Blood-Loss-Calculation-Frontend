@@ -3,31 +3,10 @@ import { Card } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import { type Operation } from '../modules/itunesApi'
 import './OperationCard.css'
-import { IMAGE_BASE_URL } from '../config';
 
 interface Props {
   operation: Operation
   onImageClick?: () => void
-}
-
-const processImageUrl = (url: string | null): string => {
-  const defaultOperationImage = '/src/assets/default-operation.jpg';
-  
-  if (!url) return defaultOperationImage;
-  
-  if (url.includes('192.168.1.72:9000') || url.includes('localhost:9000')) {
-    return url;
-  }
-  
-  if (url.startsWith('/')) {
-    return `${IMAGE_BASE_URL}${url}`;
-  }
-  
-  if (url.startsWith('http')) {
-    return url;
-  }
-  
-  return defaultOperationImage;
 }
 
 export const OperationCard: FC<Props> = ({ operation, onImageClick }) => {
@@ -36,12 +15,9 @@ export const OperationCard: FC<Props> = ({ operation, onImageClick }) => {
       <Card.Img 
         className="cardImage" 
         variant="top" 
-        src={processImageUrl(operation.image_url)}
+        src={operation.image_url || '/src/assets/default-operation.jpg'} 
         height={200}
         onClick={onImageClick}
-        onError={(e) => {
-          e.currentTarget.src = '/src/assets/default-operation.jpg';
-        }}
       />
       <Card.Body>
         <div className="textStyle">
